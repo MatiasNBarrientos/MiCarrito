@@ -30,7 +30,7 @@ class MiCarritoApp extends StatelessWidget {
     // Escucha al megáfono y redibuja la app si cambia el tema
     return ValueListenableBuilder<ThemeMode>(
       valueListenable: themeNotifier,
-      builder: (_, ThemeMode modoActual, __) {
+      builder: (_, ThemeMode modoActual, _) {
         return MaterialApp(
           title: 'MiCarrito',
           debugShowCheckedModeBanner: false,
