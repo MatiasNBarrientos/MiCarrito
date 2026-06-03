@@ -1,0 +1,29 @@
+name: MiCarrito
+description: "A new Flutter project."
+publish_to: 'none'
+version: 0.1.0+1
+
+environment:
+  sdk: ^3.12.0
+
+dependencies:
+  http: ^1.2.0
+  flutter:
+    sdk: flutter
+  mobile_scanner: ^7.2.0
+  google_fonts: ^8.1.0
+  shared_preferences: ^2.2.3
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.4
+
+flutter:
+  uses-material-design: true
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "lib\\assets\\icono.png"
+  min_sdk_android: 21 # Soporte para dispositivos modernos
