@@ -1,43 +1,52 @@
 class Producto {
   String id;
   String nombre;
-  double precioUnitario;
   int cantidad;
+  double precioUnitario; // <-- Actualizado
   String categoria;
-  String? codigoBarras;
   bool comprado;
+  String? codigoBarras;
 
   Producto({
-    required this.id,
+    String? id,
     required this.nombre,
-    required this.precioUnitario,
-    required this.cantidad,
+    this.cantidad = 1,
+    this.precioUnitario = 0.0,
     required this.categoria,
-    this.codigoBarras,
     this.comprado = false,
-  });
+    this.codigoBarras,
+  }) : id = id ?? DateTime.now().millisecondsSinceEpoch.toString();
 
-  double get subtotal => precioUnitario * cantidad;
+  double get subtotal => cantidad * precioUnitario;
 
-  // Convierte el objeto a texto para guardarlo en la memoria del celular
-  Map<String, dynamic> toJson() => {
-    'id': id,
-    'nombre': nombre,
-    'precioUnitario': precioUnitario,
-    'cantidad': cantidad,
-    'categoria': categoria,
-    'codigoBarras': codigoBarras,
-    'comprado': comprado,
-  };
+  factory Producto.fromJson(Map<String, dynamic> json) {
+    return Producto(
+      id: json['id']?.toString(),
+      nombre: json['nombre']?.toString() ?? 'Sin nombre',
+      cantidad: int.tryParse(json['cantidad']?.toString() ?? '1') ?? 1,
+      // Leemos 'precioUnitario' directo desde la API
+      precioUnitario:
+          double.tryParse(
+            json['precioUnitario']?.toString() ??
+                json['precio']?.toString() ??
+                '0.0',
+          ) ??
+          0.0,
+      categoria: json['categoria']?.toString() ?? 'Otros',
+      comprado: json['comprado'] == true || json['comprado'] == 'true',
+      codigoBarras: json['codigoBarras']?.toString(),
+    );
+  }
 
-  // Convierte el texto guardado de vuelta a un objeto Producto
-  factory Producto.fromJson(Map<String, dynamic> json) => Producto(
-    id: json['id'].toString(),
-    nombre: json['nombre'] ?? '',
-    precioUnitario: double.tryParse(json['precioUnitario'].toString()) ?? 0.0,
-    cantidad: int.tryParse(json['cantidad'].toString()) ?? 1,
-    categoria: json['categoria'] ?? 'Otros',
-    codigoBarras: json['codigoBarras']?.toString(),
-    comprado: json['comprado'].toString().toLowerCase() == 'true',
-  );
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'nombre': nombre,
+      'cantidad': cantidad,
+      'precioUnitario': precioUnitario,
+      'categoria': categoria,
+      'comprado': comprado,
+      'codigoBarras': codigoBarras ?? '',
+    };
+  }
 }

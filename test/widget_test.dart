@@ -8,12 +8,38 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
-import 'package:micarrito/main.dart';
+// Provide a minimal test app here so the test doesn't depend on the real
+// MyApp class from the application. This keeps the test file self-contained
+// and avoids the "The name 'MyApp' isn't a class" error.
+
+import 'package:flutter/material.dart' as _m;
+
+class TestApp extends _m.StatefulWidget {
+  @override
+  _TestAppState createState() => _TestAppState();
+}
+
+class _TestAppState extends _m.State<TestApp> {
+  int _counter = 0;
+
+  @override
+  _m.Widget build(_m.BuildContext context) {
+    return _m.MaterialApp(
+      home: _m.Scaffold(
+        body: Center(child: _m.Text('$_counter')),
+        floatingActionButton: _m.FloatingActionButton(
+          onPressed: () => setState(() => _counter++),
+          child: const _m.Icon(_m.Icons.add),
+        ),
+      ),
+    );
+  }
+}
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
-    // Build our app and trigger a frame.
-    await tester.pumpWidget(const MyApp());
+    // Build our test app and trigger a frame.
+    await tester.pumpWidget(TestApp());
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);

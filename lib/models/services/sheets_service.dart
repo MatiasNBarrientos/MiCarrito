@@ -1,103 +1,84 @@
 import 'dart:convert';
 import 'package:http/http.dart' as http;
-import 'package:shared_preferences/shared_preferences.dart';
 import '/models/producto.dart';
 
 class SheetsService {
-  // ACA PEGA TU URL DE APPS SCRIPT
-  static const String _urlWebApp = 'https://script.google.com/macros/s/AKfycbwj_qIIFUOhpCFpHaH4IAtE6v0AemV_QCuGtKuoXPoCt567DVPRh7dWKswwcJqPpr0A/exec';
+  // ==========================================
+  // ACORDATE DE PEGAR TU URL ACÁ DE NUEVO
+  // ==========================================
+  static const String _urlWebDeployment = 'https://script.google.com/macros/s/AKfycbwj_qIIFUOhpCFpHaH4IAtE6v0AemV_QCuGtKuoXPoCt567DVPRh7dWKswwcJqPpr0A/exec';
 
-  // 1. OBTENER PRODUCTOS: Intenta de la nube, si falla, carga el caché
   static Future<List<Producto>> obtenerProductos() async {
-    final prefs = await SharedPreferences.getInstance();
-
     try {
-      final response = await http
-          .get(Uri.parse(_urlWebApp))
-          .timeout(const Duration(seconds: 10));
+      final response = await http.get(Uri.parse(_urlWebDeployment));
+
       if (response.statusCode == 200) {
-        final List<dynamic> datosJson = json.decode(response.body);
-        final productosNube = datosJson
-            .map((json) => Producto.fromJson(json))
-            .toList();
-        return productosNube;
+        final List<dynamic> data = json.decode(response.body);
+        return data.map((jsonItem) => Producto.fromJson(jsonItem)).toList();
+      } else {
+        print('Error en el servidor: ${response.statusCode}');
+        return [];
       }
     } catch (e) {
-      print("Sin conexión: No se pudo obtener de Sheets.");
+      print('Error al obtener productos: $e');
+      return [];
     }
-
-    // Si falló internet, cargamos la memoria del celular
-    final String? datosLocales = prefs.getString('productos_locales');
-    if (datosLocales != null) {
-      final List<dynamic> datosJson = json.decode(datosLocales);
-      return datosJson.map((json) => Producto.fromJson(json)).toList();
-    }
-    return [];
   }
 
-  // 2. ENVIAR ACCIÓN: Intenta subir a la nube, si falla, va a la cola
-  static Future<void> enviarAccion(Producto producto, String accion) async {
-    final prefs = await SharedPreferences.getInstance();
-    final Map<String, dynamic> payload = {
-      "action": accion,
-      "id": producto.id,
-      "nombre": producto.nombre,
-      "precioUnitario": producto.precioUnitario,
-      "cantidad": producto.cantidad,
-      "categoria": producto.categoria,
-      "codigoBarras": producto.codigoBarras ?? "",
-      "comprado": producto.comprado,
-    };
-
+  static Future<bool> enviarAccion(Producto producto, String accion) async {
     try {
-      final response = await http
-          .post(Uri.parse(_urlWebApp), body: json.encode(payload))
-          .timeout(const Duration(seconds: 5));
+      final response = await http.post(
+        Uri.parse(_urlWebDeployment),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode({
+          'action': accion,
+          'id': producto.id,
+          'nombre': producto.nombre,
+          'cantidad': producto.cantidad,
+          'precioUnitario': producto.precioUnitario, // <-- Actualizado
+          'categoria': producto.categoria,
+          'comprado': producto.comprado,
+          'codigoBarras': producto.codigoBarras,
+        }),
+      );
 
-      if (response.statusCode == 200) return; // Éxito total
+      return response.statusCode == 200;
     } catch (e) {
-      print("Sin internet: Acción guardada en cola local.");
+      print('Error al enviar accion: $e');
+      return false;
     }
-
-    // Guardamos en la cola local para enviarlo después
-    final String? colaString = prefs.getString('cola_acciones');
-    List<dynamic> cola = colaString != null ? json.decode(colaString) : [];
-    cola.add(payload);
-    await prefs.setString('cola_acciones', json.encode(cola));
   }
+  static Future<double> obtenerTotalHistorial() async {
+    try {
+      // Le pasamos el "?tipo=historial" al final del link
+      final response = await http.get(
+        Uri.parse('$_urlWebDeployment?tipo=historial'),
+      );
 
-  // 3. SINCRONIZADOR: Intenta subir todo lo que haya quedado atascado
-  static Future<void> sincronizarPendientes() async {
-    final prefs = await SharedPreferences.getInstance();
-    final String? colaString = prefs.getString('cola_acciones');
-
-    if (colaString == null) return;
-
-    List<dynamic> cola = json.decode(colaString);
-    if (cola.isEmpty) return;
-
-    List<dynamic> noEnviados = [];
-
-    for (var accion in cola) {
-      try {
-        final response = await http
-            .post(Uri.parse(_urlWebApp), body: json.encode(accion))
-            .timeout(const Duration(seconds: 5));
-
-        if (response.statusCode != 200) {
-          noEnviados.add(
-            accion,
-          ); // Falló el server, lo guardamos para intentar más tarde
-        }
-      } catch (e) {
-        noEnviados.add(accion); // Sigue sin internet
+      if (response.statusCode == 200) {
+        return double.tryParse(response.body) ?? 0.0;
       }
+    } catch (e) {
+      print('Error al obtener historial: $e');
     }
+    return 0.0;
+  }
+  static Future<void> hacerBackupEnDrive(String historialJson) async {
+    try {
+      final payload = {
+        'accion': 'BACKUP',
+        'historial':
+            historialJson, // Pasamos todo el historial convertido a texto
+      };
 
-    if (noEnviados.isEmpty) {
-      await prefs.remove('cola_acciones'); // Limpiamos la cola si todo se envió
-    } else {
-      await prefs.setString('cola_acciones', json.encode(noEnviados));
+      await http.post(
+        Uri.parse(_urlWebDeployment),
+        headers: {'Content-Type': 'application/json'},
+        body: jsonEncode(payload),
+      );
+      print("Backup enviado con éxito a Drive");
+    } catch (e) {
+      print('Error al enviar backup a Drive: $e');
     }
   }
 }

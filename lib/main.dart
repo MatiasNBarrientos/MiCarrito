@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'models/screens/lista_compras.dart';
+import 'models/screens/pantalla_principal.dart';
 
 // --- EL MEGÁFONO GLOBAL PARA EL TEMA ---
 final ValueNotifier<ThemeMode> themeNotifier = ValueNotifier(ThemeMode.system);
@@ -70,7 +70,7 @@ class MiCarritoApp extends StatelessWidget {
             ),
           ),
 
-          home: const PantallaListaCompras(),
+          home: const PantallaPrincipal(),
         );
       },
     );

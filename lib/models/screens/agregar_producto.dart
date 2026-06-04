@@ -1,11 +1,12 @@
 import 'package:flutter/material.dart';
 import '/models/producto.dart';
+import 'pantalla_escaneo.dart';
 
 class AgregarProductoForm extends StatefulWidget {
   final Producto? productoAEditar;
   final String? codigoBarrasPrellenado;
-  final String? nombrePrellenado; // NUEVO
-  final String? categoriaPrellenada; // NUEVO
+  final String? nombrePrellenado;
+  final String? categoriaPrellenada;
   final Function(Producto) onGuardar;
 
   const AgregarProductoForm({
@@ -45,7 +46,6 @@ class _AgregarProductoFormState extends State<AgregarProductoForm> {
   @override
   void initState() {
     super.initState();
-    // Prellenamos los datos si vienen del catálogo o de edición
     _nombreController = TextEditingController(
       text: widget.productoAEditar?.nombre ?? widget.nombrePrellenado ?? '',
     );
@@ -63,10 +63,30 @@ class _AgregarProductoFormState extends State<AgregarProductoForm> {
         widget.productoAEditar?.codigoBarras ?? widget.codigoBarrasPrellenado;
   }
 
+  // --- NUEVA FUNCIÓN PARA ESCANEAR DIRECTO DESDE EL FORMULARIO ---
+  Future<void> _escanearCodigo() async {
+    final codigoScanned = await Navigator.of(
+      context,
+    ).push<String>(MaterialPageRoute(builder: (_) => const PantallaEscaneo()));
+    if (codigoScanned != null && mounted) {
+      setState(() {
+        _codigoBarras = codigoScanned;
+      });
+      // Mensajito de éxito opcional
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Código vinculado con éxito'),
+          backgroundColor: Colors.green,
+          duration: Duration(seconds: 2),
+        ),
+      );
+    }
+  }
+
   void _enviarDatos() {
     if (_formKey.currentState!.validate()) {
       final nombre = _nombreController.text;
-      final precio = double.parse(_precioController.text);
+      final precio = double.tryParse(_precioController.text) ?? 0.0;
 
       final producto = Producto(
         id:
@@ -99,13 +119,50 @@ class _AgregarProductoFormState extends State<AgregarProductoForm> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              widget.productoAEditar == null
-                  ? 'Agregar Producto'
-                  : 'Editar Producto',
-              style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            // --- NUEVA CABECERA CON EL TÍTULO Y EL BOTÓN DE ESCANEAR ---
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  widget.productoAEditar == null
+                      ? 'Agregar Producto'
+                      : 'Editar Producto',
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                IconButton(
+                  // Si ya hay un código, el botón se pone verde para avisarte
+                  icon: Icon(
+                    Icons.qr_code_scanner,
+                    color: _codigoBarras != null
+                        ? Colors.green
+                        : const Color(0xFFD49EEB),
+                    size: 30,
+                  ),
+                  onPressed: _escanearCodigo,
+                ),
+              ],
             ),
+
+            // Si escaneó algo, mostramos el numerito chiquito abajo del botón
+            if (_codigoBarras != null)
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  'Código: $_codigoBarras',
+                  style: const TextStyle(
+                    color: Colors.green,
+                    fontSize: 12,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+
             const SizedBox(height: 20),
+
+            // --- RESTO DEL FORMULARIO INTACTO ---
             TextFormField(
               controller: _nombreController,
               decoration: const InputDecoration(
@@ -140,10 +197,6 @@ class _AgregarProductoFormState extends State<AgregarProductoForm> {
                       labelText: 'Precio Unitario \$',
                       border: OutlineInputBorder(),
                     ),
-                    validator: (val) =>
-                        val == null || double.tryParse(val) == null
-                        ? 'Inválido'
-                        : null,
                   ),
                 ),
                 const SizedBox(width: 16),
