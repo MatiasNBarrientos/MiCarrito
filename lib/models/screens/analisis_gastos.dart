@@ -34,8 +34,12 @@ class _PantallaAnalisisGastosState extends State<PantallaAnalisisGastos> {
 
   Future<void> _cargarDatosLocales() async {
     final prefs = await SharedPreferences.getInstance();
+    
     setState(() {
+      // 1. Cargamos el sueldo
       _ingresoTotal = prefs.getDouble('ingreso_total') ?? 0.0;
+      
+      // 2. Cargamos los gastos externos (luz, internet, etc)
       final String? gastosString = prefs.getString('gastos_externos');
       if (gastosString != null) {
         final List<dynamic> decodificado = jsonDecode(gastosString);
@@ -43,12 +47,13 @@ class _PantallaAnalisisGastosState extends State<PantallaAnalisisGastos> {
             .map((e) => Map<String, dynamic>.from(e))
             .toList();
       }
-    });
 
-    final totalSuper = await SheetsService.obtenerTotalHistorial();
-    if (mounted) {
-      setState(() => _gastosSupermercado = totalSuper);
-    }
+      // ==============================================================
+      // 3. NUEVO: Leemos el total estimado del carrito en tiempo real
+      // ==============================================================
+      _gastosSupermercado = prefs.getDouble('total_carrito_abierto') ?? 0.0;
+      
+    });
   }
 
   Future<void> _guardarIngreso() async {
@@ -329,51 +334,57 @@ class _PantallaAnalisisGastosState extends State<PantallaAnalisisGastos> {
         return Container(
           padding: const EdgeInsets.all(24),
           height: MediaQuery.of(context).size.height * 0.65,
-          child: Column(
-            children: [
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(10),
-                ),
-              ),
-              const SizedBox(height: 20),
-              const Text(
-                'Distribución de tu Dinero',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
-              ),
-              const SizedBox(height: 30),
-              SizedBox(
-                width: 200,
-                height: 200,
-                child: CustomPaint(
-                  painter: PastelPainter(
-                    _ingresoTotal,
-                    _gastosSupermercado,
-                    _totalGastosExternos,
-                    esOscuro,
+          // =======================================================
+          // SOLUCIÓN: Agregamos SingleChildScrollView acá
+          // =======================================================
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                Container(
+                  width: 40,
+                  height: 5,
+                  decoration: BoxDecoration(
+                    color: Colors.grey.shade300,
+                    borderRadius: BorderRadius.circular(10),
                   ),
                 ),
-              ),
-              const SizedBox(height: 40),
-              _crearLeyendaGrafico(
-                color: const Color(0xFF6A1B9A),
-                titulo: 'Supermercado',
-                monto: _gastosSupermercado,
-              ),
-              _crearLeyendaGrafico(
-                color: Colors.orange,
-                titulo: 'Gastos Externos',
-                monto: _totalGastosExternos,
-              ),
-              _crearLeyendaGrafico(
-                color: esOscuro ? Colors.grey.shade800 : Colors.grey.shade300,
-                titulo: 'Dinero Restante',
-                monto: _saldoRestante > 0 ? _saldoRestante : 0,
-              ),
-            ],
+                const SizedBox(height: 20),
+                const Text(
+                  'Distribución de tu Dinero',
+                  style: TextStyle(fontSize: 22, fontWeight: FontWeight.w900),
+                ),
+                const SizedBox(height: 30),
+                SizedBox(
+                  width: 200,
+                  height: 200,
+                  child: CustomPaint(
+                    painter: PastelPainter(
+                      _ingresoTotal,
+                      _gastosSupermercado,
+                      _totalGastosExternos,
+                      esOscuro,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 40),
+                _crearLeyendaGrafico(
+                  color: const Color(0xFF6A1B9A),
+                  titulo: 'Supermercado',
+                  monto: _gastosSupermercado,
+                ),
+                _crearLeyendaGrafico(
+                  color: Colors.orange,
+                  titulo: 'Gastos Externos',
+                  monto: _totalGastosExternos,
+                ),
+                _crearLeyendaGrafico(
+                  color: esOscuro ? Colors.grey.shade800 : Colors.grey.shade300,
+                  titulo: 'Dinero Restante',
+                  monto: _saldoRestante > 0 ? _saldoRestante : 0,
+                ),
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         );
       },
@@ -429,13 +440,17 @@ class _PantallaAnalisisGastosState extends State<PantallaAnalisisGastos> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(20),
+      body: RefreshIndicator(
+        onRefresh: _cargarDatosLocales, // <-- Vuelve a leer tu Google Sheets y memoria local
+        color: const Color(0xFF6A1B9A),
+        child: SingleChildScrollView(
+          physics: const AlwaysScrollableScrollPhysics(), // <-- Fundamental para que te deje arrastrar hacia abajo
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(20),
               decoration: BoxDecoration(
                 gradient: const LinearGradient(
                   colors: [Color(0xFF6A1B9A), Color(0xFFD500F9)],
@@ -549,7 +564,7 @@ class _PantallaAnalisisGastosState extends State<PantallaAnalisisGastos> {
               height: 50,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.redAccent.withOpacity(0.1),
+                  backgroundColor: Colors.redAccent.withValues(alpha: 0.1),
                   foregroundColor: Colors.redAccent,
                   elevation: 0,
                   shape: RoundedRectangleBorder(
@@ -598,7 +613,7 @@ class _PantallaAnalisisGastosState extends State<PantallaAnalisisGastos> {
           ],
         ),
       ),
-    );
+    ));
   }
 
   Widget _crearTarjetaGasto(
@@ -624,7 +639,7 @@ class _PantallaAnalisisGastosState extends State<PantallaAnalisisGastos> {
             color: colorIcono.withValues(alpha: 0.1),
             shape: BoxShape.circle,
           ),
-          child: Icon(icono, color: colorIcono),
+            child: Icon(icono, color: colorIcono),
         ),
         title: Text(
           titulo,

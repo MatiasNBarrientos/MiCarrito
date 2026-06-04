@@ -5,6 +5,7 @@ import 'detalle_producto.dart';
 import 'modal_presets.dart';
 import 'agregar_producto.dart';
 import 'pantalla_escaneo.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class PantallaListaCompras extends StatefulWidget {
   final Function(Function())? onRegistrarFab;
@@ -26,9 +27,19 @@ class _PantallaListaComprasState extends State<PantallaListaCompras> {
     _cargarDatos();
   }
 
-  Future<void> _cargarDatos() async {
+ Future<void> _cargarDatos() async {
     setState(() => _cargando = true);
     final productos = await SheetsService.obtenerProductos();
+
+    // Calculamos el total de los productos que acabamos de descargar
+    double totalCalculado = productos.fold(
+      0,
+      (suma, item) => suma + (item.precioUnitario * item.cantidad),
+    );
+
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setDouble('total_carrito_abierto', totalCalculado);
+
     setState(() {
       _productos = productos;
       _cargando = false;
@@ -559,6 +570,11 @@ Widget _construirTarjetaProducto(BuildContext context, Producto producto) {
                         onTap: () async {
                           if (producto.cantidad > 1) {
                             setState(() => producto.cantidad--);
+                            final prefs = await SharedPreferences.getInstance();
+                            await prefs.setDouble(
+                              'total_carrito_abierto',
+                              _totalEstimado,
+                            );
                             await SheetsService.enviarAccion(
                               producto,
                               'UPDATE',
@@ -590,6 +606,11 @@ Widget _construirTarjetaProducto(BuildContext context, Producto producto) {
                       InkWell(
                         onTap: () async {
                           setState(() => producto.cantidad++);
+                          final prefs = await SharedPreferences.getInstance();
+                          await prefs.setDouble(
+                            'total_carrito_abierto',
+                            _totalEstimado,
+                          );
                           await SheetsService.enviarAccion(producto, 'UPDATE');
                         },
                         child: Padding(
