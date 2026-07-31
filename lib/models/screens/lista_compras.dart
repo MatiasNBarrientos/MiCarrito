@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import '/models/producto.dart';
 import '../services/sheets_service.dart';
@@ -15,35 +17,122 @@ class PantallaListaCompras extends StatefulWidget {
   State<PantallaListaCompras> createState() => _PantallaListaComprasState();
 }
 
-class _PantallaListaComprasState extends State<PantallaListaCompras> {
+class _PantallaListaComprasState extends State<PantallaListaCompras>
+    with WidgetsBindingObserver {
   List<Producto> _productos = [];
   bool _cargando = true;
+  bool _actualizacionEnCurso = false;
+  String _ultimaFirmaProductos = '';
+  Timer? _timerAutoRefresh;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     // Ahora el botón "+" central usa nuestro formulario avanzado
     widget.onRegistrarFab?.call(() => _abrirFormulario(context));
     _cargarDatos();
+    _timerAutoRefresh = Timer.periodic(
+      const Duration(seconds: 15),
+      (_) => _refrescarSilenciosamente(),
+    );
   }
 
- Future<void> _cargarDatos() async {
-    setState(() => _cargando = true);
-    final productos = await SheetsService.obtenerProductos();
+  @override
+  void dispose() {
+    _timerAutoRefresh?.cancel();
+    WidgetsBinding.instance.removeObserver(this);
+    super.dispose();
+  }
 
-    // Calculamos el total de los productos que acabamos de descargar
-    double totalCalculado = productos.fold(
-      0,
-      (suma, item) => suma + (item.precioUnitario * item.cantidad),
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _refrescarSilenciosamente();
+    }
+  }
+
+  String _crearFirmaProductos(List<Producto> productos) {
+    return productos
+        .map(
+          (producto) =>
+              '${producto.id}|${producto.nombre}|${producto.cantidad}|'
+              '${producto.precioUnitario}|${producto.categoria}|'
+              '${producto.comprado}|${producto.codigoBarras ?? ''}',
+        )
+        .join('||');
+  }
+
+  void _mostrarAvisoListaActualizada() {
+    if (!mounted) return;
+
+    final messenger = ScaffoldMessenger.of(context);
+    messenger.hideCurrentSnackBar();
+    messenger.showSnackBar(
+      const SnackBar(
+        content: Text('Lista actualizada'),
+        duration: Duration(seconds: 2),
+        behavior: SnackBarBehavior.floating,
+        backgroundColor: Color(0xFF6A1B9A),
+      ),
     );
+  }
 
-    final prefs = await SharedPreferences.getInstance();
-    await prefs.setDouble('total_carrito_abierto', totalCalculado);
+  Future<void> _refrescarSilenciosamente() async {
+    await _cargarDatos(
+      mostrarCarga: false,
+      soloSiCambio: true,
+      avisarSiCambio: true,
+    );
+  }
 
-    setState(() {
-      _productos = productos;
-      _cargando = false;
-    });
+  Future<void> _cargarDatos({
+    bool mostrarCarga = true,
+    bool soloSiCambio = false,
+    bool avisarSiCambio = false,
+  }) async {
+    if (_actualizacionEnCurso) return;
+    _actualizacionEnCurso = true;
+
+    try {
+      if (mostrarCarga && mounted) {
+        setState(() => _cargando = true);
+      }
+
+      final productos = await SheetsService.obtenerProductos();
+
+      // Calculamos el total de los productos que acabamos de descargar
+      double totalCalculado = productos.fold(
+        0,
+        (suma, item) => suma + (item.precioUnitario * item.cantidad),
+      );
+
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setDouble('total_carrito_abierto', totalCalculado);
+
+      final nuevaFirma = _crearFirmaProductos(productos);
+      final huboCambios =
+          nuevaFirma != _ultimaFirmaProductos ||
+          _productos.length != productos.length;
+
+      if (!mounted) return;
+
+      if (!soloSiCambio || huboCambios) {
+        setState(() {
+          _productos = productos;
+          _ultimaFirmaProductos = nuevaFirma;
+          _cargando = false;
+        });
+
+        if (avisarSiCambio && huboCambios) {
+          _mostrarAvisoListaActualizada();
+        }
+      } else if (_cargando) {
+        setState(() => _cargando = false);
+      }
+    } finally {
+      _actualizacionEnCurso = false;
+    }
   }
 
   double get _totalEstimado {
@@ -301,16 +390,22 @@ class _PantallaListaComprasState extends State<PantallaListaCompras> {
                                   color: Color(0xFF6A1B9A),
                                 ),
                               )
-                            : ListView.builder(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 16,
+                            : RefreshIndicator(
+                                color: const Color(0xFF6A1B9A),
+                                onRefresh: _cargarDatos,
+                                child: ListView.builder(
+                                  physics:
+                                      const AlwaysScrollableScrollPhysics(),
+                                  padding: const EdgeInsets.symmetric(
+                                    horizontal: 16,
+                                  ),
+                                  itemCount: _productos.length,
+                                  itemBuilder: (context, index) =>
+                                      _construirTarjetaProducto(
+                                        context,
+                                        _productos[index],
+                                      ),
                                 ),
-                                itemCount: _productos.length,
-                                itemBuilder: (context, index) =>
-                                    _construirTarjetaProducto(
-                                      context,
-                                      _productos[index],
-                                    ),
                               ),
                       ),
                       Container(
