@@ -4,10 +4,12 @@ import 'package:http/http.dart' as http;
 import '/models/producto.dart';
 
 class SheetsService {
-  // ==========================================
-  // ACORDATE DE PEGAR TU URL ACÁ DE NUEVO
-  // ==========================================
-  static const String _urlWebDeployment = 'https://script.google.com/macros/s/AKfycbwj_qIIFUOhpCFpHaH4IAtE6v0AemV_QCuGtKuoXPoCt567DVPRh7dWKswwcJqPpr0A/exec';
+  // Usamos una constante que puede ser inyectada al compilar con --dart-define
+  // Si no se inyecta, usa la URL por defecto (pero no se recomienda para Git publico)
+  static const String _urlWebDeployment = String.fromEnvironment(
+    'SHEETS_URL',
+    defaultValue: 'https://script.google.com/macros/s/AKfycbwj_qIIFUOhpCFpHaH4IAtE6v0AemV_QCuGtKuoXPoCt567DVPRh7dWKswwcJqPpr0A/exec',
+  );
 
   static Future<List<Producto>> obtenerProductos() async {
     try {

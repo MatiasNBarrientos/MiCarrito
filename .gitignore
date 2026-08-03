@@ -25,21 +25,26 @@ migrate_working_dir/
 
 # Flutter/Dart/Pub related
 **/doc/api/
-**/ios/Flutter/.last_build_id
 .dart_tool/
 .flutter-plugins-dependencies
 .pub-cache/
 .pub/
 /build/
-/coverage/
 
-# Symbolication related
-app.*.symbols
-
-# Obfuscation related
-app.*.map.json
-
-# Android Studio will place build artifacts here
+# Mobile specific
 /android/app/debug
 /android/app/profile
 /android/app/release
+/ios/Flutter/.last_build_id
+
+# Symbolication and Obfuscation
+app.*.symbols
+app.*.map.json
+*.symbols
+*.map.json
+
+# Sensitive files
+key.properties
+**/*.keystore
+**/*.jks
+.env
