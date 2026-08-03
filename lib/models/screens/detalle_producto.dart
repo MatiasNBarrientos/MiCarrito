@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '/models/producto.dart';
-import 'pantalla_escaneo.dart';
 import 'agregar_producto.dart';
 
 class PantallaDetalleProducto extends StatefulWidget {
@@ -30,13 +29,12 @@ class _PantallaDetalleProductoState extends State<PantallaDetalleProducto> {
   }
 
   Future<void> _vincularCodigoBarras() async {
-    final codigoScanned = await Navigator.of(
-      context,
-    ).push<String>(MaterialPageRoute(builder: (_) => const PantallaEscaneo()));
-    if (codigoScanned != null && mounted) {
-      setState(() => _prod.codigoBarras = codigoScanned);
-      widget.onEditar(_prod);
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('El escaneo esta temporalmente deshabilitado'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   void _abrirFormularioEdicion() {

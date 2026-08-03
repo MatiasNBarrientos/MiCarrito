@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '/models/producto.dart';
-import 'pantalla_escaneo.dart';
 
 class AgregarProductoForm extends StatefulWidget {
   final Producto? productoAEditar;
@@ -65,22 +64,12 @@ class _AgregarProductoFormState extends State<AgregarProductoForm> {
 
   // --- NUEVA FUNCIÓN PARA ESCANEAR DIRECTO DESDE EL FORMULARIO ---
   Future<void> _escanearCodigo() async {
-    final codigoScanned = await Navigator.of(
-      context,
-    ).push<String>(MaterialPageRoute(builder: (_) => const PantallaEscaneo()));
-    if (codigoScanned != null && mounted) {
-      setState(() {
-        _codigoBarras = codigoScanned;
-      });
-      // Mensajito de éxito opcional
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Código vinculado con éxito'),
-          backgroundColor: Colors.green,
-          duration: Duration(seconds: 2),
-        ),
-      );
-    }
+    ScaffoldMessenger.of(context).showSnackBar(
+      const SnackBar(
+        content: Text('El escaneo esta temporalmente deshabilitado'),
+        duration: Duration(seconds: 2),
+      ),
+    );
   }
 
   void _enviarDatos() {

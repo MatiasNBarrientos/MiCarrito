@@ -12,24 +12,26 @@ import 'package:flutter_test/flutter_test.dart';
 // MyApp class from the application. This keeps the test file self-contained
 // and avoids the "The name 'MyApp' isn't a class" error.
 
-import 'package:flutter/material.dart' as _m;
+import 'package:flutter/material.dart' as m;
 
-class TestApp extends _m.StatefulWidget {
+class TestApp extends m.StatefulWidget {
+  const TestApp({super.key});
+
   @override
-  _TestAppState createState() => _TestAppState();
+  State<TestApp> createState() => _TestAppState();
 }
 
-class _TestAppState extends _m.State<TestApp> {
+class _TestAppState extends m.State<TestApp> {
   int _counter = 0;
 
   @override
-  _m.Widget build(_m.BuildContext context) {
-    return _m.MaterialApp(
-      home: _m.Scaffold(
-        body: Center(child: _m.Text('$_counter')),
-        floatingActionButton: _m.FloatingActionButton(
+  m.Widget build(m.BuildContext context) {
+    return m.MaterialApp(
+      home: m.Scaffold(
+        body: Center(child: m.Text('$_counter')),
+        floatingActionButton: m.FloatingActionButton(
           onPressed: () => setState(() => _counter++),
-          child: const _m.Icon(_m.Icons.add),
+          child: const m.Icon(m.Icons.add),
         ),
       ),
     );

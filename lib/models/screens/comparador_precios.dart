@@ -278,7 +278,7 @@ class _PantallaComparadorState extends State<PantallaComparador> {
           ),
           const SizedBox(height: 10),
           DropdownButtonFormField<String>(
-            value: op.unidad,
+            initialValue: op.unidad,
             decoration: InputDecoration(
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(12),

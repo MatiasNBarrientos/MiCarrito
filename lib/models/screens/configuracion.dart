@@ -85,55 +85,60 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
           // TARJETA DE MODO OSCURO MEJORADA
           Container(
             decoration: BoxDecoration(
-              color: colorTarjeta,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
               ],
             ),
-            child: SwitchListTile(
-              activeColor: const Color(0xFFD49EEB),
-              activeTrackColor: const Color(0xFF6A1B9A).withOpacity(0.3),
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 8,
-              ),
-              title: Text(
-                'Modo Oscuro',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colorTexto,
+            child: Material(
+              color: colorTarjeta,
+              borderRadius: BorderRadius.circular(20),
+              clipBehavior: Clip.antiAlias,
+              child: SwitchListTile(
+                activeThumbColor: const Color(0xFFD49EEB),
+                activeTrackColor: const Color(
+                  0xFF6A1B9A,
+                ).withValues(alpha: 0.3),
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 8,
                 ),
-              ),
-              subtitle: Text(
-                'Forzar colores oscuros en la aplicación',
-                style: TextStyle(
-                  color: esOscuro ? Colors.white54 : Colors.black54,
-                  fontSize: 12,
+                title: Text(
+                  'Modo Oscuro',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colorTexto,
+                  ),
                 ),
-              ),
-              value: _modoOscuroActivado,
-              onChanged: _cambiarTema,
-              // Ícono dinámico y colorido en el trailing
-              secondary: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color:
-                      (_modoOscuroActivado
-                              ? const Color(0xFFD49EEB)
-                              : Colors.orange)
-                          .withOpacity(0.1),
-                  shape: BoxShape.circle,
+                subtitle: Text(
+                  'Forzar colores oscuros en la aplicación',
+                  style: TextStyle(
+                    color: esOscuro ? Colors.white54 : Colors.black54,
+                    fontSize: 12,
+                  ),
                 ),
-                child: Icon(
-                  _modoOscuroActivado ? Icons.dark_mode : Icons.light_mode,
-                  color: _modoOscuroActivado
-                      ? const Color(0xFFD49EEB)
-                      : Colors.orange,
+                value: _modoOscuroActivado,
+                onChanged: _cambiarTema,
+                secondary: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color:
+                        (_modoOscuroActivado
+                                ? const Color(0xFFD49EEB)
+                                : Colors.orange)
+                            .withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(
+                    _modoOscuroActivado ? Icons.dark_mode : Icons.light_mode,
+                    color: _modoOscuroActivado
+                        ? const Color(0xFFD49EEB)
+                        : Colors.orange,
+                  ),
                 ),
               ),
             ),
@@ -156,44 +161,48 @@ class _PantallaConfiguracionState extends State<PantallaConfiguracion> {
           // TARJETA DE GOOGLE SHEETS MEJORADA
           Container(
             decoration: BoxDecoration(
-              color: colorTarjeta,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
-                  color: Colors.black.withOpacity(0.03),
+                  color: Colors.black.withValues(alpha: 0.03),
                   blurRadius: 10,
                   offset: const Offset(0, 5),
                 ),
               ],
             ),
-            child: ListTile(
-              contentPadding: const EdgeInsets.symmetric(
-                horizontal: 20,
-                vertical: 12,
-              ),
-              leading: Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: Colors.green.withOpacity(0.1),
-                  shape: BoxShape.circle,
+            child: Material(
+              color: colorTarjeta,
+              borderRadius: BorderRadius.circular(20),
+              clipBehavior: Clip.antiAlias,
+              child: ListTile(
+                contentPadding: const EdgeInsets.symmetric(
+                  horizontal: 20,
+                  vertical: 12,
                 ),
-                child: const Icon(Icons.cloud_done, color: Colors.green),
-              ),
-              title: Text(
-                'Google Sheets Conectado',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: colorTexto,
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.green.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.cloud_done, color: Colors.green),
                 ),
-              ),
-              subtitle: Text(
-                'Sincronización mediante Apps Script',
-                style: TextStyle(
-                  color: esOscuro ? Colors.white54 : Colors.black54,
-                  fontSize: 12,
+                title: Text(
+                  'Google Sheets Conectado',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: colorTexto,
+                  ),
                 ),
+                subtitle: Text(
+                  'Sincronización mediante Apps Script',
+                  style: TextStyle(
+                    color: esOscuro ? Colors.white54 : Colors.black54,
+                    fontSize: 12,
+                  ),
+                ),
+                trailing: const Icon(Icons.check_circle, color: Colors.green),
               ),
-              trailing: const Icon(Icons.check_circle, color: Colors.green),
             ),
           ),
         ],

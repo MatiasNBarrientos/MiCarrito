@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
 import '/models/producto.dart';
 
@@ -16,11 +17,11 @@ class SheetsService {
         final List<dynamic> data = json.decode(response.body);
         return data.map((jsonItem) => Producto.fromJson(jsonItem)).toList();
       } else {
-        print('Error en el servidor: ${response.statusCode}');
+        debugPrint('Error en el servidor: ${response.statusCode}');
         return [];
       }
     } catch (e) {
-      print('Error al obtener productos: $e');
+      debugPrint('Error al obtener productos: $e');
       return [];
     }
   }
@@ -44,7 +45,7 @@ class SheetsService {
 
       return response.statusCode == 200;
     } catch (e) {
-      print('Error al enviar accion: $e');
+      debugPrint('Error al enviar accion: $e');
       return false;
     }
   }
@@ -59,7 +60,7 @@ class SheetsService {
         return double.tryParse(response.body) ?? 0.0;
       }
     } catch (e) {
-      print('Error al obtener historial: $e');
+      debugPrint('Error al obtener historial: $e');
     }
     return 0.0;
   }
@@ -76,9 +77,9 @@ class SheetsService {
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode(payload),
       );
-      print("Backup enviado con éxito a Drive");
+      debugPrint('Backup enviado con exito a Drive');
     } catch (e) {
-      print('Error al enviar backup a Drive: $e');
+      debugPrint('Error al enviar backup a Drive: $e');
     }
   }
 }

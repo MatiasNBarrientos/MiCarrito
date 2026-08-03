@@ -6,7 +6,6 @@ import '../services/sheets_service.dart';
 import 'detalle_producto.dart';
 import 'modal_presets.dart';
 import 'agregar_producto.dart';
-import 'pantalla_escaneo.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class PantallaListaCompras extends StatefulWidget {
@@ -230,22 +229,16 @@ class _PantallaListaComprasState extends State<PantallaListaCompras>
                 'Escanear Código',
                 style: TextStyle(fontWeight: FontWeight.bold),
               ),
-              subtitle: const Text('Agregar un producto con la cámara'),
-              onTap: () async {
+              subtitle: const Text('Temporalmente deshabilitado'),
+              onTap: () {
                 Navigator.pop(ctxModal); // Cierra el menucito de abajo
-
-                // Abre el escáner
-                final codigo = await Navigator.push<String>(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const PantallaEscaneo(),
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('El escaneo esta temporalmente deshabilitado'),
+                    duration: Duration(seconds: 2),
                   ),
                 );
-
-                // Si encontró un código, abre el formulario y se lo pega automático
-                if (codigo != null && context.mounted) {
-                  _abrirFormulario(context, codigoEscaneado: codigo);
-                }
               },
             ),
             const Divider(),
@@ -287,6 +280,56 @@ class _PantallaListaComprasState extends State<PantallaListaCompras>
 
 
 
+  // =======================================================
+  // ACCIÓN DE CERRAR CARRITO
+  // =======================================================
+  void _confirmarCierreCarrito(BuildContext context) {
+    if (_productos.isEmpty) return;
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text('¿Cerrar Carrito?'),
+        content: const Text(
+          'Se archivará la compra en el historial y se vaciará la lista actual. Esta acción no se puede deshacer.',
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Cancelar'),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: const Color(0xFF6A1B9A),
+              foregroundColor: Colors.white,
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              _cerrarCarrito();
+            },
+            child: const Text('Confirmar'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _cerrarCarrito() async {
+    setState(() => _cargando = true);
+    final productoFalso = Producto(nombre: 'compra', categoria: 'Otros');
+    await SheetsService.enviarAccion(productoFalso, 'COMPRAR');
+
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('¡Compra archivada en el Historial!'),
+          backgroundColor: Color.fromARGB(255, 47, 255, 0),
+        ),
+      );
+    }
+    await _cargarDatos();
+  }
+
   @override
   Widget build(BuildContext context) {
     final esOscuro = Theme.of(context).brightness == Brightness.dark;
@@ -314,22 +357,44 @@ class _PantallaListaComprasState extends State<PantallaListaCompras>
               // 1. ACHICAR EL RELLENO (PADDING) VERTICAL
               Padding(
                 padding: const EdgeInsets.symmetric(
-                  horizontal: 16.0, 
-                  vertical: 0.0, // <-- Bajalo de 10.0 a 4.0 (o a 0.0)
+                  horizontal: 16.0,
+                  vertical: 0.0,
                 ),
                 child: Row(
                   children: [
-                    // 2. ACHICAR EL BOTÓN DE LAS 3 RALLITAS
                     IconButton(
-                      icon: const Icon(Icons.menu, color: Colors.white, size: 26), // <-- Bajalo de 32 a 26
+                      icon:
+                          const Icon(Icons.menu, color: Colors.white, size: 26),
                       onPressed: () => _mostrarModalHerramientas(context),
                     ),
                     const SizedBox(width: 10),
-                    // 3. ACHICAR EL ÍCONO DEL CARRITO
-                    const Icon(Icons.shopping_cart, color: Colors.white, size: 22), // <-- Bajalo de 28 a 22
+                    const Icon(
+                      Icons.shopping_cart,
+                      color: Colors.white,
+                      size: 22,
+                    ),
                     const SizedBox(width: 10),
-                    // 4. ACHICAR EL TEXTO DEL TÍTULO
-                    const Text('MiCarrito', style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)), // <-- Bajalo de 24 a 20
+                    const Text(
+                      'MiCarrito',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 20,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const Spacer(),
+                    IconButton(
+                      icon: const Icon(
+                        Icons.check_circle_outline,
+                        color: Colors.white,
+                        size: 28,
+                      ),
+                      tooltip: 'Cerrar Carrito',
+                      onPressed:
+                          _productos.isEmpty
+                              ? null
+                              : () => _confirmarCierreCarrito(context),
+                    ),
                   ],
                 ),
               ),
@@ -412,7 +477,7 @@ class _PantallaListaComprasState extends State<PantallaListaCompras>
                         margin: const EdgeInsets.only(
                           left: 20,
                           right: 20,
-                          bottom: 50,
+                          bottom: 25,
                           top: 10,
                         ),
                         padding: const EdgeInsets.symmetric(
@@ -430,79 +495,22 @@ class _PantallaListaComprasState extends State<PantallaListaCompras>
                             ),
                           ],
                         ),
-                        child: Column(
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                const Text(
-                                  'TOTAL ESTIMADO:',
-                                  style: TextStyle(
-                                    color: Colors.grey,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                                Text(
-                                  '\$${_totalEstimado.toStringAsFixed(2)}',
-                                  style: const TextStyle(
-                                    color: Color(0xFFD49EEB),
-                                    fontSize: 24,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
-                              ],
+                            const Text(
+                              'TOTAL ESTIMADO:',
+                              style: TextStyle(
+                                color: Colors.grey,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
-                            const SizedBox(height: 15),
-                            SizedBox(
-                              width: double.infinity,
-                              child: ElevatedButton.icon(
-                                style: ElevatedButton.styleFrom(
-                                  backgroundColor: const Color(0xFF6A1B9A),
-                                  padding: const EdgeInsets.symmetric(
-                                    vertical: 12,
-                                  ),
-                                  shape: RoundedRectangleBorder(
-                                    borderRadius: BorderRadius.circular(12),
-                                  ),
-                                ),
-                                icon: const Icon(
-                                  Icons.check_circle,
-                                  color: Colors.white,
-                                ),
-                                label: const Text(
-                                  'CERRAR CARRITO',
-                                  style: TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.bold,
-                                    letterSpacing: 1,
-                                  ),
-                                ),
-                                onPressed: _productos.isEmpty
-                                    ? null
-                                    : () async {
-                                        setState(() => _cargando = true);
-                                        final productoFalso = Producto(
-                                          nombre: 'compra',
-                                          categoria: 'Otros',
-                                        );
-                                        await SheetsService.enviarAccion(
-                                          productoFalso,
-                                          'COMPRAR',
-                                        );
-                                        if (context.mounted) {
-                                          ScaffoldMessenger.of(
-                                            context,
-                                          ).showSnackBar(
-                                            const SnackBar(
-                                              content: Text(
-                                                '¡Compra archivada en el Historial!',
-                                              ),
-                                              backgroundColor: Color.fromARGB(255, 47, 255, 0),
-                                            ),
-                                          );
-                                        }
-                                        await _cargarDatos();
-                                      },
+                            Text(
+                              '\$${_totalEstimado.toStringAsFixed(2)}',
+                              style: const TextStyle(
+                                color: Color(0xFFD49EEB),
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
                               ),
                             ),
                           ],
@@ -531,11 +539,11 @@ Widget _construirTarjetaProducto(BuildContext context, Producto producto) {
 
     // --- COLORES MODO "TACHADO/ROJO" ---
     final colorTarjetaComprado = esOscuro
-        ? const Color.fromARGB(255, 82, 255, 108).withOpacity(0.15)
+        ? const Color.fromARGB(255, 82, 255, 108).withValues(alpha: 0.15)
         : Colors.red.shade50;
     final colorTextoComprado = esOscuro
         ? Colors.white54
-        : const Color.fromARGB(255, 28, 183, 33).withOpacity(0.6);
+        : const Color.fromARGB(255, 28, 183, 33).withValues(alpha: 0.6);
 
     // --- ELECCIÓN DINÁMICA ---
     final bgTarjeta = producto.comprado
@@ -582,13 +590,13 @@ Widget _construirTarjetaProducto(BuildContext context, Producto producto) {
           color: bgTarjeta, // <-- FONDO QUE SE TIÑE
           borderRadius: BorderRadius.circular(15),
           border: producto.comprado
-              ? Border.all(color: const Color.fromARGB(255, 88, 255, 82).withOpacity(0.3), width: 1)
+              ? Border.all(color: const Color.fromARGB(255, 88, 255, 82).withValues(alpha: 0.3), width: 1)
               : Border.all(color: Colors.transparent, width: 1),
           boxShadow: [
             if (!producto
                 .comprado) // Apagamos la sombra al tachar para dar efecto "hundido"
               BoxShadow(
-                color: Colors.black.withOpacity(0.03),
+                color: Colors.black.withValues(alpha: 0.03),
                 blurRadius: 8,
                 offset: const Offset(0, 2),
               ),
@@ -617,7 +625,7 @@ Widget _construirTarjetaProducto(BuildContext context, Producto producto) {
                   decoration: BoxDecoration(
                     // Para que el ícono quede grisáceo si está comprado
                     color: producto.comprado
-                        ? Colors.grey.withOpacity(0.1)
+                        ? Colors.grey.withValues(alpha: 0.1)
                         : _obtenerColorCategoria(producto.categoria),
                     shape: BoxShape.circle,
                   ),
@@ -655,7 +663,7 @@ Widget _construirTarjetaProducto(BuildContext context, Producto producto) {
                     color: esOscuro
                         ? const Color(0xFF2C2C2C)
                         : (producto.comprado
-                              ? const Color.fromARGB(255, 95, 244, 54).withOpacity(0.1)
+                              ? const Color.fromARGB(255, 95, 244, 54).withValues(alpha: 0.1)
                               : Colors.grey.shade200),
                     borderRadius: BorderRadius.circular(8),
                   ),

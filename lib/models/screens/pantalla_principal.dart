@@ -173,51 +173,51 @@ class _PantallaPrincipalState extends State<PantallaPrincipal> {
             )
           : null,
 
-bottomNavigationBar: BottomAppBar(
-        padding:
-            EdgeInsets.only(top: 18), // <-- ESTO QUITA EL RELLENO GIGANTE POR DEFECTO
-        height:50, // <-- ALTURA FIJA (Podés bajarlo a 55 si la querés aún más fina)
+      bottomNavigationBar: BottomAppBar(
+        padding: const EdgeInsets.symmetric(horizontal: 10),
+        height: 75,
         shape: const CircularNotchedRectangle(),
-        notchMargin: 6.0,
+        notchMargin: 8.0,
         color: colorBarra,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
-            _crearBotonNavegacion(0, Icons.shopping_cart, 'Carrito'),
-            _crearBotonNavegacion(1, Icons.balance, 'Comparar'),
-            const SizedBox(width: 40), // El hueco para el botón +
-            _crearBotonNavegacion(2, Icons.analytics, 'Gastos'),
-            _crearBotonNavegacion(3, Icons.person, 'Perfil'),
-          ],
+        child: SafeArea(
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
+            children: [
+              _crearBotonNavegacion(0, Icons.shopping_cart, 'Carrito'),
+              _crearBotonNavegacion(1, Icons.balance, 'Comparar'),
+              const SizedBox(width: 48), // El hueco para el botón +
+              _crearBotonNavegacion(2, Icons.analytics, 'Gastos'),
+              _crearBotonNavegacion(3, Icons.person, 'Perfil'),
+            ],
+          ),
         ),
       ),
     );
   }
 
-  // --- BOTONES MÁS COMPACTOS ---
+  // --- BOTONES DE NAVEGACIÓN ---
   Widget _crearBotonNavegacion(int indice, IconData icono, String texto) {
     final estaSeleccionado = _indiceActual == indice;
     final color = estaSeleccionado ? const Color(0xFF6A1B9A) : Colors.grey;
 
     return GestureDetector(
       onTap: () => setState(() => _indiceActual = indice),
-      behavior:
-          HitTestBehavior.opaque, // Para que el botón detecte el toque fácil
-      child: SizedBox(
-        width: 50,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(icono, color: color, size: 20),
-            const SizedBox(
-              height: 2,
-            ), // Apenas un respiro entre el ícono y el texto
-            Text(
-              texto,
-              style: TextStyle(color: color, fontSize: 10, height: 1),
+      behavior: HitTestBehavior.opaque,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icono, color: color, size: 24),
+          const SizedBox(height: 4),
+          Text(
+            texto,
+            style: TextStyle(
+              color: color,
+              fontSize: 12,
+              fontWeight: estaSeleccionado ? FontWeight.bold : FontWeight.normal,
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }

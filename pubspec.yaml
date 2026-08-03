@@ -1,4 +1,4 @@
-name: MiCarrito
+name: mi_carrito
 description: "A new Flutter project."
 publish_to: 'none'
 version: 0.1.0+1
@@ -10,7 +10,6 @@ dependencies:
   http: ^1.2.0
   flutter:
     sdk: flutter
-  mobile_scanner: ^7.2.0
   google_fonts: ^8.1.0
   shared_preferences: ^2.2.3
 dev_dependencies:
@@ -18,6 +17,7 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^6.0.0
   flutter_launcher_icons: ^0.14.4
+  flutter_native_splash: ^2.4.0
 
 flutter:
   uses-material-design: true
@@ -27,3 +27,9 @@ flutter_launcher_icons:
   ios: true
   image_path: "lib\\assets\\icono.png"
   min_sdk_android: 21 # Soporte para dispositivos modernos
+
+flutter_native_splash:
+  color: "#6A1B9A"
+  image: "lib/assets/icono.png"
+  android: true
+  ios: true

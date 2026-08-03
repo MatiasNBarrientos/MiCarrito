@@ -258,7 +258,7 @@ class _ModalPresetsState extends State<ModalPresets> {
               ),
               const SizedBox(height: 15),
               DropdownButtonFormField<String>(
-                value: categoriaSelec,
+                initialValue: categoriaSelec,
                 decoration: InputDecoration(
                   labelText: 'Categoría',
                   border: OutlineInputBorder(

@@ -1,0 +1,9 @@
+- [ ] Rediseñar `lista_compras.dart`
+    - [ ] Extraer lógica de `_cerrarCarrito`
+    - [ ] Crear diálogo `_confirmarCierreCarrito`
+    - [ ] Mover botón a la barra superior
+    - [ ] Ajustar márgenes del pie de página
+- [ ] Rediseñar `pantalla_principal.dart`
+    - [ ] Ajustar altura de `BottomAppBar`
+    - [ ] Integrar `SafeArea`
+    - [ ] Refinar diseño de botones de navegación
